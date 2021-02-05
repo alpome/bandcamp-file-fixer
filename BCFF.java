@@ -7,24 +7,21 @@ import java.util.Arrays;
 import java.util.List;
 
 import static java.lang.System.exit;
+import static java.lang.System.setOut;
 
 /***
 * @author Alexander Merluzzi
 * @date February 27 2020
 * @title Bandcamp File Fixer - BCFF
-* This is a small utility whose purpose is to rename songs downloaded from 
+* This is a small utility with the purpose of renaming songs downloaded from
 * Bandcamp to remove the artist and album name prepended to every track.
-*
-* Seemingly due to limitations in Java's handling of Unicode and UTF-8 encoding,
-* the starting directory cannot contain non-English characters.
-* 
 */
 
 class BCFF{
 	final static String REGEX = ".* - .* - .*";
 	final static String PATH = "";
+	final static double ver = 0.8;
 	//static ArrayList<String> list = new ArrayList<String>();
-
 	static FilenameFilter fnf = new FilenameFilter() {
 		public boolean accept(File dir, String filename) {
 			if (filename.endsWith(".zip"))
@@ -40,47 +37,54 @@ class BCFF{
 	public static void main(String[] args){
 		Scanner in = new Scanner(System.in, "UTF-8");
 		File folder = null;
-		boolean recurse = true;
+		boolean recurse = true, rmv_art = false, rmv_alb = false;
 
 		//@TODO Finish code to use CLI arguments rather than Scanner
 		if (args.length <= 0) {
 			System.out.println("No arguments supplied.");
-			//exit(1);
+			exit(1);
 		} else {
 			for (int i = 0; i < args.length; i++) {
 				switch (args[i]) {
 					case "-r":
-						if (args[i+1].equals("True"||"False")) {
-                            //set recurse flag to either TRUE or FALSE
-							recurse = args[i+1];
-							System.out.println("Recurse flag set to " + recurse);
-                            i++;
-                            break;
-                        } else
-                            System.exit(1);
+						recurse = Boolean.parseBoolean(args[i + 1]);
+						System.out.println("Recurse flag set to " + recurse);
+						i++;
+						break;
                     case "-ar":
                         //set remove artist flag to either TRUE or FALSE
+						rmv_art = true;
                         break;
                     case "-al":
                         //set remove album flag to either TRUE or FALSE
+						rmv_alb = true;
                         break;
+                    case "-v":
+						System.out.println("BCFF version " + ver);
                     case "-h":
 						System.out.println("Options:");
 						System.out.println("-h			Print this text and exit");
-						System.out.println("-r VALUE	Recurse through sub-folders nestled under provided directory. t or true for yes, f or false for no. Default is true.");
-						System.out.println("-ar			Remove artist name only. (Not yet implemented.");
-						System.out.println("-al			Remove album name only. (Not yet implemented.");
+						System.out.println("-v			Print version number and exit");
+						System.out.println("-r VALUE	Recurse through sub-folders nestled under provided directory. Default is true.");
+						System.out.println("-ar			Remove artist name only. Default is false. (Not yet implemented.)");
+						System.out.println("-al			Remove album name only. Default is false. (Not yet implemented.)");
 						System.exit(0);
                     default:
                         //Check if input is valid file directory and begin process
-                        //otherwise quit program
+						//otherwise quit program
+						String dir = args[i];
+						folder = new File(dir);
+						if (!folder.exists() && !folder.isDirectory()){
+							System.out.println("Path provided - " + dir + " - either does not exist or is not a directory.");
+							System.exit(1);
+						}
 				}
 			}
 		}
 
 		/*
 		Loop to get valid directory as input
-		 */
+
 		do{
 			System.out.print("Provide path to directory: ");
 			String dir = in.nextLine();
@@ -94,7 +98,7 @@ class BCFF{
 				folder = null;
 			}
 		} while (folder == null);
-		in.close();
+		in.close();*/
 
 		/*
 		Checks if directory contains any files or subdirectories, ignoring .zip archives
