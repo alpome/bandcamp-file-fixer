@@ -1,13 +1,10 @@
 import java.io.*;
-import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.Arrays;
 import java.util.List;
-
 import static java.lang.System.exit;
-import static java.lang.System.setOut;
 
 /***
 * @author Alexander Merluzzi
@@ -15,9 +12,12 @@ import static java.lang.System.setOut;
 * @title Bandcamp File Fixer - BCFF
 * This is a small utility with the purpose of renaming songs downloaded from
 * Bandcamp to remove the artist and album name prepended to every track.
+ *
+ * Something about the way Java (or CMD?) handles Unicode prevents inputting an initial
+ * folder with Unicode.
 */
 
-class BCFF{
+class bcff{
 	final static String REGEX = ".* - .* - .*";
 	final static String PATH = "";
 	final static double ver = 0.8;
@@ -35,42 +35,44 @@ class BCFF{
      * @param args
      */
 	public static void main(String[] args){
-		Scanner in = new Scanner(System.in, "UTF-8");
+		//Scanner in = new Scanner(System.in, "UTF-8");
 		File folder = null;
-		boolean recurse = true, rmv_art = false, rmv_alb = false;
+		boolean recurse = false, rmv_art = false, rmv_alb = false;
 
 		//@TODO Finish code to use CLI arguments rather than Scanner
 		if (args.length <= 0) {
-			System.out.println("No arguments supplied.");
+			System.out.println("Bandcamp File Fixer - BCFF v " + ver);
 			exit(1);
 		} else {
 			for (int i = 0; i < args.length; i++) {
 				switch (args[i]) {
 					case "-r":
-						recurse = Boolean.parseBoolean(args[i + 1]);
-						System.out.println("Recurse flag set to " + recurse);
-						i++;
+						recurse = true;
 						break;
                     case "-ar":
                         //set remove artist flag to either TRUE or FALSE
 						rmv_art = true;
+						System.out.println("Removing only artist name");
                         break;
                     case "-al":
                         //set remove album flag to either TRUE or FALSE
 						rmv_alb = true;
+						System.out.println("Removing only album name");
                         break;
                     case "-v":
 						System.out.println("BCFF version " + ver);
+						System.exit(0);
                     case "-h":
 						System.out.println("Options:");
 						System.out.println("-h			Print this text and exit");
 						System.out.println("-v			Print version number and exit");
-						System.out.println("-r VALUE	Recurse through sub-folders nestled under provided directory. Default is true.");
+						System.out.println("-r			Recurse through sub-folders nestled under provided directory. Default is false.");
 						System.out.println("-ar			Remove artist name only. Default is false. (Not yet implemented.)");
 						System.out.println("-al			Remove album name only. Default is false. (Not yet implemented.)");
+						System.out.println("-m          Rename music files only. Default is false. (Not yet implemented.)");
 						System.exit(0);
                     default:
-                        //Check if input is valid file directory and begin process
+                        //Check if input is a valid file directory and begin process
 						//otherwise quit program
 						String dir = args[i];
 						folder = new File(dir);
@@ -78,10 +80,10 @@ class BCFF{
 							System.out.println("Path provided - " + dir + " - either does not exist or is not a directory.");
 							System.exit(1);
 						}
+
 				}
 			}
 		}
-
 		/*
 		Loop to get valid directory as input
 
@@ -100,22 +102,34 @@ class BCFF{
 		} while (folder == null);
 		in.close();*/
 
-		/*
-		Checks if directory contains any files or subdirectories, ignoring .zip archives
-		Calls file tree stepping function if files/subdirectories are found
-		 */
-		try {
-			File[] ff = folder.listFiles(fnf);
-			if (ff != null && ff.length > 0){
-				checkTree(ff);
-			} else {
-				if (ff == null)
-					System.out.println("No file list found");
-				else if (ff.length <= 0)
-					System.out.println("File list length is less than or equal to 0: " + ff.length);
+		File[] ff = folder.listFiles(fnf);
+		if (ff == null){
+			System.out.println("There are no files to rename in this folder.");
+			System.exit(1);
+		}
+		if (recurse) {
+			/*
+			Checks if directory contains any files or subdirectories, ignoring .zip archives
+			Calls file tree stepping function if files/subdirectories are found
+			 */
+			try {
+				if (ff.length > 0) {
+					checkTree(ff);
+				} else {
+					if (ff == null)
+						System.out.println("No file list found");
+					else if (ff.length <= 0)
+						System.out.println("File list length is less than or equal to 0: " + ff.length);
+				}
+			} catch (NullPointerException npe) {
+				System.out.println("Provided directory is empty");
 			}
-		} catch (NullPointerException npe){
-			System.out.println("Directory is empty");
+		} else {
+			if (ff != null) {
+				System.out.println("Renaming only top-level files");
+				for (File f : ff)
+					rename(f);
+			}
 		}
 	}
 
@@ -150,10 +164,10 @@ class BCFF{
 		String path = file.getPath(), fixed_path = path.replace(name, "");
 		String parent_f = file.getParentFile().getName();
 		if (name.contains(parent_f)){
-			System.out.println("Renaming " + name);
+			//System.out.println("Renaming " + name);
 			fixed_name = name.replace(parent_f, "").substring(3);
 			file.renameTo(new File(fixed_path + fixed_name));
-			System.out.println("Renamed to " + fixed_name);
+			//System.out.println("Renamed to " + fixed_name);
 		}
 	}
 
@@ -163,10 +177,8 @@ class BCFF{
      * @return
      */
     //@TODO finish
-	static Boolean unsupportedExt(File file){
-		String[] exts = new String[]{"jpg","bmp","png","pitt","txt","exe"};
-		List<String> list = Arrays.asList(exts);
-		//return list.contains(file.getExtension());
+	static Boolean supportedExt(File file){
+
 		return true;
 	}
 }
