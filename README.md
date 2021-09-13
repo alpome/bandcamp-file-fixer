@@ -17,7 +17,7 @@ the track.
 ### Changes/Fixes to be Made
 
 Due to how Java handles Unicode input, the provided directory cannot contain Unicode 
-characters. I believe a solution exists and will be added in a later revision. 
+characters.
 
 Currently this relies on the folder being titled in a specific way that is common to most Bandcamp 
 downloads. However, should the file have been renamed or Bandcamp named the folder different than 
